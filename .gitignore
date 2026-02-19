@@ -4,6 +4,10 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+.env
+.env.*
+
+
 ### STS ###
 .apt_generated
 .classpath
@@ -27,7 +31,6 @@ C:\Users\USER\Documents\Safewatch\WEAKNESSES_AND_RECOMMENDATIONS.md
 
 # Local secrets
 src/main/resources/application.properties
-src/main/resources/application-*.properties
 
 # Keep example templates tracked
 !src/main/resources/application-dev.properties.example
