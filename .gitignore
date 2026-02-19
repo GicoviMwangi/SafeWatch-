@@ -24,6 +24,10 @@ C:\Users\USER\Documents\Safewatch\WEAKNESSES_AND_RECOMMENDATIONS.md
 # Build
 /target/
 
+src/main/resources/application-dev.properties.example
+src/main/resources/application-prod.properties
+*.env
+
 
 ### IntelliJ IDEA ###
 .idea
