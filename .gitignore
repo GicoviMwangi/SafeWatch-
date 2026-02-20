@@ -19,8 +19,6 @@ target/
 # Spring
 /src/main/resources/application.properties
 /src/main/resources/application-*.properties
-C:\Users\USER\Documents\Safewatch\PROJECT_ANALYSIS.md
-C:\Users\USER\Documents\Safewatch\WEAKNESSES_AND_RECOMMENDATIONS.md
 
 # IntelliJ
 .idea/
@@ -28,6 +26,10 @@ C:\Users\USER\Documents\Safewatch\WEAKNESSES_AND_RECOMMENDATIONS.md
 # Build
 /target/
 
+
+# local documentation notes
+*.md
+!README.md
 
 # Local secrets
 src/main/resources/application.properties
