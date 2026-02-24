@@ -1,8 +1,8 @@
 package com.safewatch.services;
 
 import com.safewatch.exceptions.PasswordMismatchException;
-import com.safewatch.models.User;
 import com.safewatch.models.TokenType;
+import com.safewatch.models.User;
 import com.safewatch.models.VerificationToken;
 import com.safewatch.repositories.CurrentUserRepository;
 import com.safewatch.repositories.VerificationTokenRepository;
@@ -20,22 +20,21 @@ import java.time.OffsetDateTime;
 @Service
 @RequiredArgsConstructor
 public class PasswordResetService {
+    private static final int EXP_MINUTES = 15;
     private final CurrentUserRepository userRepository;
     private final VerificationTokenRepository tokenRepository;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder(12);
 
-    private static final int EXP_MINUTES = 15;
-
-    public PasswordTokenResponse requestReset(PasswordRequestReset requestReset){
+    public PasswordTokenResponse requestReset(PasswordRequestReset requestReset) {
         User user = userRepository.findByEmail(requestReset.getEmail()).orElseThrow(() -> new UsernameNotFoundException("Email address not found."));
 
-        if(user.isLocked()){
+        if (user.isLocked()) {
             throw new IllegalStateException("Account locked");
         }
 
         tokenRepository.invalidateActiveTokens(user, TokenType.RESET_PASSWORD);
 
-        String  rawToken = TokenUntil.generateToken();
+        String rawToken = TokenUntil.generateToken();
         String tokenHash = TokenUntil.sha256(rawToken);
 
         VerificationToken verificationToken = new VerificationToken();
@@ -47,32 +46,32 @@ public class PasswordResetService {
 
         tokenRepository.save(verificationToken);
 
-        return new PasswordTokenResponse(rawToken,EXP_MINUTES);
+        return new PasswordTokenResponse(rawToken, EXP_MINUTES);
     }
 
-    public String confirmReset(PasswordRequestConfirmRequest confirmRequest){
+    public String confirmReset(PasswordRequestConfirmRequest confirmRequest) {
 
-        if (confirmRequest.getNewPassword() == null || confirmRequest.getConfirmPassword() == null ){
+        if (confirmRequest.getNewPassword() == null || confirmRequest.getConfirmPassword() == null) {
             throw new NullPointerException("Password fields cannot be null");
         }
 
-        if (confirmRequest.getNewPassword().length() < 7){
+        if (confirmRequest.getNewPassword().length() < 7) {
             throw new RuntimeException("Password is too short");
         }
 
-        if (!confirmRequest.getNewPassword().equals(confirmRequest.getConfirmPassword())){
+        if (!confirmRequest.getNewPassword().equals(confirmRequest.getConfirmPassword())) {
             throw new PasswordMismatchException("Password do not match");
         }
 
-        if (confirmRequest.getToken() == null || confirmRequest.getToken().isBlank()){
+        if (confirmRequest.getToken() == null || confirmRequest.getToken().isBlank()) {
             throw new IllegalStateException("Token is required");
         }
 
         String token = TokenUntil.sha256(confirmRequest.getToken());
 
-        VerificationToken verificationToken = tokenRepository.findByTokenHashAndTokenTypeAndUsedFalse(token,TokenType.RESET_PASSWORD).orElseThrow(() -> new IllegalArgumentException("Invalid token"));
+        VerificationToken verificationToken = tokenRepository.findByTokenHashAndTokenTypeAndUsedFalse(token, TokenType.RESET_PASSWORD).orElseThrow(() -> new IllegalArgumentException("Invalid token"));
 
-        if (verificationToken.getExpiresAt().isBefore(OffsetDateTime.now())){
+        if (verificationToken.getExpiresAt().isBefore(OffsetDateTime.now())) {
             verificationToken.setUsed(true);
             throw new IllegalStateException("Invalid token");
         }

@@ -13,7 +13,7 @@ public record IncidentDTO(String title,
                           Status status,
                           long version) {
     public static IncidentDTO from(Incident i) {
-        return new IncidentDTO( i.getTitle(), i.getDescription(),i.getLocation(),i.getSeverity(),i.getIncidentCategory(), i.getStatus(),i.getVersion());
+        return new IncidentDTO(i.getTitle(), i.getDescription(), i.getLocation(), i.getSeverity(), i.getIncidentCategory(), i.getStatus(), i.getVersion());
     }
 
 }

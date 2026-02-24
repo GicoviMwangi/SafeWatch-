@@ -6,17 +6,18 @@ import com.safewatch.services.IncidentModerationService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
-
-@SuppressWarnings("NullableProblems")
 @RestController
-@RequestMapping("/api/admin/incidents")
+@RequestMapping("/api/admin/incident")
 @RequiredArgsConstructor
 @PreAuthorize("hasAuthority('ROLE_ADMIN')")
 public class IncidentModerationController {
@@ -33,15 +34,26 @@ public class IncidentModerationController {
         return userPrincipal.getUsername();
     }
 
+    @GetMapping("/get-all")
+    public ResponseEntity<Page<IncidentDTO>> getAllIncidents(@RequestParam(defaultValue = "0") int pageNumber, @RequestParam(defaultValue = "10") int pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize, Sort.by("reportedAt").descending());
+        return ResponseEntity.ok(incidentModerationService.getAllReports(pageable));
+    }
+
+    @GetMapping("/get/{incidentId}")
+    public ResponseEntity<IncidentDTO> getIncidentByIncidentId(@PathVariable("incidentId") Long incidentId) {
+        return ResponseEntity.ok(incidentModerationService.getIncidentByIncidentId(incidentId));
+    }
+
     @PostMapping("/{reportId}/verify")
-    public ResponseEntity<IncidentDTO> verifyIncident( Authentication authentication,@PathVariable Long reportId) {
+    public ResponseEntity<IncidentDTO> verifyIncident(Authentication authentication, @PathVariable Long reportId) {
         String adminEmail = extractEmail(authentication);
 
         authentication.getAuthorities().forEach(a ->
                 logger.info("AUTHORITY IN CONTEXT = {}", a.getAuthority())
         );
 
-        return ResponseEntity.ok(incidentModerationService.verifyIncident( adminEmail,reportId));
+        return ResponseEntity.ok(incidentModerationService.verifyIncident(adminEmail, reportId));
     }
 
     @PostMapping("/{reportId}/publish")
@@ -60,16 +72,6 @@ public class IncidentModerationController {
     public ResponseEntity<IncidentDTO> flagIncident(@PathVariable Long reportId, Authentication authentication, @RequestParam String reason) {
         String email = extractEmail(authentication);
         return ResponseEntity.ok(incidentModerationService.flagIncident(reportId, email, reason));
-    }
-
-    @GetMapping("/reports")
-    public ResponseEntity<List<IncidentDTO>> getAllReports() {
-        return ResponseEntity.ok(incidentModerationService.getAllReports());
-    }
-
-    @GetMapping("/report/{reportId}")
-    public ResponseEntity<IncidentDTO> getReportById(@PathVariable Long reportId) {
-        return ResponseEntity.ok(incidentModerationService.getReportById(reportId));
     }
 
     @PostMapping("/report/archive/{reportId}")

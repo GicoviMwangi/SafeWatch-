@@ -4,8 +4,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -40,7 +38,7 @@ public class SecurityConfiguration {
                 .httpBasic(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(requests -> {
-                    requests.requestMatchers("/api/login", "/api/refresh", "/api/register","/api/verify").permitAll()
+                    requests.requestMatchers("/api/login", "/api/refresh", "/api/register", "/api/verify").permitAll()
                             .requestMatchers("/api/admin/*").hasAuthority("ROLE_ADMIN")
                             .requestMatchers("/api/incident/*").authenticated()
                             .anyRequest().authenticated();

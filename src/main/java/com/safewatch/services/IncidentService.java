@@ -18,10 +18,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.time.OffsetDateTime;
 
 @Service
 @Transactional
@@ -33,6 +32,76 @@ public class IncidentService {
 
     private String mask(String email) {
         return email.replaceAll("(^.).*(@.*$)", "$1***$2");
+    }
+
+    public Page<IncidentDTO> getAllReports() {
+        logger.info("Attempting to retrieve all incident reports");
+
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("reportedAt").ascending());
+        return incidentRepository.findAllVisibleReports(pageable).map(HelperUtility::convertToDTO);
+    }
+
+    public IncidentDTO getReportById(Long incidentId) {
+        logger.info("Attempting to retrieve incident report incidentId={} ,", incidentId);
+
+        Incident incident = incidentRepository.findVisibleReportById(incidentId).orElseThrow(() -> new IncidentNotFoundException("Incident not found"));
+
+        return HelperUtility.convertToDTO(incident);
+    }
+
+    public Page<IncidentDTO> filterByCategory(String category, int page, int size) {
+        logger.info("Filtering incident report by category, category={}", category);
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("reportedAt").ascending());
+
+        IncidentCategory categoryEnum;
+
+        try {
+            categoryEnum = IncidentCategory.valueOf(category.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid severity enum, category={}", category, e);
+            throw new IllegalStateException("No such category of type : " + category);
+        }
+
+        return incidentRepository
+                .findByIncidentCategoryAndDeletedAtIsNull(categoryEnum, pageable)
+                .map(HelperUtility::convertToDTO);
+    }
+
+    public Page<IncidentDTO> filterByStatus(String status, int page, int size) {
+        logger.info("Filtering incident report by status. status={}", status);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("reportedAt").ascending());
+
+        Status statusEnum;
+        try {
+            statusEnum = Status.valueOf(status.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid severity enum, status={}", status, e);
+            throw new IllegalArgumentException("No such status of type " + status);
+        }
+
+        return incidentRepository.findByStatusAndDeletedAtIsNull(statusEnum, pageable).map(HelperUtility::convertToDTO);
+    }
+
+    public Page<IncidentDTO> filterBySeverity(String severity, int page, int size) {
+        logger.info("Filtering incident reports severity{}.", severity);
+        Pageable pageable = PageRequest.of(page, size, Sort.by("reportedAt").ascending());
+
+        Severity severityEnum;
+        try {
+            severityEnum = Severity.valueOf(severity.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            logger.error("Invalid severity enum, enum={}", severity, e);
+            throw new IllegalArgumentException("No such severity of type " + severity);
+        }
+
+        return incidentRepository.findBySeverityAndDeletedAtIsNull(severityEnum, pageable).map(HelperUtility::convertToDTO);
+    }
+
+    public Page<IncidentDTO> getMyReports(Long userId) {
+        Pageable pageable = PageRequest.of(0, 10, Sort.by("reportedAt").ascending());
+
+        return incidentRepository.getMyVisibleReports(userId,pageable).map(HelperUtility::convertToDTO);
     }
 
     public IncidentDTO reportIncident(String email, ReportRequest request) {
@@ -74,35 +143,6 @@ public class IncidentService {
         return HelperUtility.convertToDTO(incident);
     }
 
-    public Page<IncidentDTO> getAllReports() {
-        logger.info("Attempting to retrieve all incident reports");
-
-        Pageable pageable = PageRequest.of(0, 10, Sort.by("reportedAt").ascending());
-        return incidentRepository.findAll(pageable).map(HelperUtility::convertToDTO);
-    }
-
-    public IncidentDTO getReportById(Long reportId) {
-        logger.info("Attempting to retrieve incident report reportId={} ,", reportId);
-        return HelperUtility.convertToDTO(incidentRepository.findById(reportId).orElseThrow(() -> new IncidentNotFoundException("Incident of id " + reportId + ", not found")));
-    }
-
-    public String deleteReportById(String email, Long reportId) {
-        logger.info("Attempting to delete incident reports {}", mask(email));
-
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("Email not found"));
-
-        Incident incident = incidentRepository.findById(reportId).orElseThrow(() -> new IncidentNotFoundException("Incident of id " + reportId + ", not found"));
-
-        if (!incident.getReportedBy().getEmail().equals(user.getEmail())) {
-            throw new InvalidIncidentException("Unable to update incident report.");
-        }
-
-        incidentRepository.delete(incident);
-
-        logger.info("Incident report deleted successfully, reportID={},userID={}", incident.getIncidentId(), user.getUserID());
-        return "Report deleted successfully";
-    }
-
     public IncidentDTO updateReport(String email, Long reportId, ReportRequest request) {
         logger.info("Attempting to update incident report user={},reportId={}", mask(email), reportId);
         User user = userRepository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("Email not found"));
@@ -125,56 +165,25 @@ public class IncidentService {
         incident.setUpdatedAt(LocalDateTime.now());
         incident.setReportedBy(user);
 
-        logger.info("Updated incident report successfully reportId={}, userID={}", mask(email), user.getUserID());
+        logger.info("Updated incident report successfully reportId={}, userID={}", mask(email), user.getUserId());
         return HelperUtility.convertToDTO(incidentRepository.save(incident));
     }
 
-    public Page<IncidentDTO> filterByCategory(String category, int page, int size) {
-        logger.info("Filtering incident report by category, category={}", category);
+    //soft delete to help with auditing
+    @Transactional
+    public void deleteIncident(Long userId, Long incidentId, String reason) {
+        logger.info("Attempting to delete incident report by user_id={}", userId);
 
-        Pageable pageable = PageRequest.of(page, size, Sort.by("reportedAt").ascending());
+        Incident incident = incidentRepository.findById(incidentId).orElseThrow(() -> new IncidentNotFoundException("Incident with id " + incidentId + " not found"));
 
-        IncidentCategory categoryEnum;
+        if (incident.getDeletedAt() != null) throw new InvalidIncidentException("Incident with id " + incidentId + " does not exist.");
 
-        try {
-            categoryEnum = IncidentCategory.valueOf(category.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            logger.error("Invalid severity enum, category={}", category, e);
-            throw new IllegalStateException("No such category of type : " + category);
-        }
+        incident.setDeletedAt(OffsetDateTime.now());
+        incident.setDeletedBy(userId);
+        incident.setDeletedReason(reason);
 
-        return incidentRepository
-                .findByIncidentCategory(categoryEnum, pageable)
-                .map(HelperUtility::convertToDTO);
-    }
+        logger.info("deleted_By={} deleted_Reason={}", incident.getDeletedBy(), reason);
 
-    public Page<IncidentDTO> filterByStatus(String status, int page, int size) {
-        logger.info("Filtering incident report by status. status={}", status);
-        Pageable pageable = PageRequest.of(page, size, Sort.by("reportedAt").ascending());
-
-        Status statusEnum;
-        try {
-            statusEnum = Status.valueOf(status.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            logger.error("Invalid severity enum, status={}", status, e);
-            throw new IllegalArgumentException("No such status of type " + status);
-        }
-
-        return incidentRepository.findByStatus(statusEnum, pageable).map(HelperUtility::convertToDTO);
-    }
-
-    public Page<IncidentDTO> filterBySeverity(String severity, int page, int size) {
-        logger.info("Filtering incident reports severity{}.", severity);
-        Pageable pageable = PageRequest.of(page, size, Sort.by("reportedAt").ascending());
-
-        Severity severityEnum;
-        try {
-            severityEnum = Severity.valueOf(severity.toUpperCase());
-        } catch (IllegalArgumentException e) {
-            logger.error("Invalid severity enum, enum={}", severity, e);
-            throw new IllegalArgumentException("No such severity of type " + severity);
-        }
-
-        return incidentRepository.findBySeverity(severityEnum, pageable).map(HelperUtility::convertToDTO);
+        incidentRepository.save(incident);
     }
 }

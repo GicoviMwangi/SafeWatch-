@@ -1,12 +1,13 @@
 package com.safewatch.util;
 
+import com.safewatch.DTOs.CommentDTO;
 import com.safewatch.DTOs.CurrentUserDTO;
 import com.safewatch.DTOs.IncidentDTO;
 import com.safewatch.exceptions.InvalidIncidentException;
-import com.safewatch.models.User;
+import com.safewatch.models.Comment;
 import com.safewatch.models.Incident;
 import com.safewatch.models.Severity;
-import com.safewatch.models.VerificationToken;
+import com.safewatch.models.User;
 import com.safewatch.repositories.CurrentUserRepository;
 import com.safewatch.repositories.VerificationTokenRepository;
 import com.safewatch.services.TokenHashingService;
@@ -17,22 +18,12 @@ import org.springframework.http.ResponseCookie;
 
 import java.security.SecureRandom;
 import java.time.Duration;
-import java.time.OffsetDateTime;
 import java.util.Base64;
 import java.util.List;
 import java.util.stream.Collectors;
 
 public class HelperUtility {
     private final static SecureRandom random = new SecureRandom();
-    private final VerificationTokenRepository tokenRepository;
-    private final CurrentUserRepository userRepository;
-    private final TokenHashingService hashingService;
-
-    public HelperUtility(VerificationTokenRepository tokenRepository, CurrentUserRepository userRepository, TokenHashingService hashingService) {
-        this.tokenRepository = tokenRepository;
-        this.userRepository = userRepository;
-        this.hashingService = hashingService;
-    }
 
     public static String generateRefreshToken() {
         byte[] bytes = new byte[64];
@@ -40,8 +31,8 @@ public class HelperUtility {
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
-    public static void setRefreshToken(HttpServletResponse response,String token){
-        ResponseCookie goodCookie = ResponseCookie.from("refreshToken",token)
+    public static void setRefreshToken(HttpServletResponse response, String token) {
+        ResponseCookie goodCookie = ResponseCookie.from("refreshToken", token)
                 .httpOnly(true)
                 .secure(false)
                 .sameSite("Lax")
@@ -49,7 +40,7 @@ public class HelperUtility {
                 .maxAge(Duration.ofDays(30))
                 .build();
 
-        ResponseCookie legacyCookie = ResponseCookie.from("refreshToken","")
+        ResponseCookie legacyCookie = ResponseCookie.from("refreshToken", "")
                 .httpOnly(true)
                 .secure(false)
                 .sameSite("Lax")
@@ -86,6 +77,15 @@ public class HelperUtility {
         return incidentList.stream().map(HelperUtility::convertToDTO).collect(Collectors.toList());
     }
 
+    public static CommentDTO convertToDTO(Comment comment) {
+        return new CommentDTO(
+                comment.getIncident().getIncidentId(),
+                comment.getUser().getUserId(),
+                comment.getComment(),
+                comment.getCreatedAt()
+        );
+    }
+
     public static void validateReport(ReportRequest req, Severity severity) {
 
         if (req.getTitle() == null || req.getTitle().length() < 5) {
@@ -100,7 +100,6 @@ public class HelperUtility {
         if (req.getLocation() == null || req.getLocation().isBlank())
             throw new InvalidIncidentException("Location is required");
     }
-
 
 
 }

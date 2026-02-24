@@ -4,12 +4,13 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.stereotype.Component;
 
 //@Component for debug purposes only
 @RequiredArgsConstructor
 public class MailConfigDebug {
     private final org.springframework.core.env.Environment env;
+    @Autowired
+    JavaMailSender mailSender;
 
     @PostConstruct
     void logMailConfig() {
@@ -17,9 +18,6 @@ public class MailConfigDebug {
         System.out.println("MAIL port=" + env.getProperty("spring.mail.port"));
         System.out.println("MAIL user=" + env.getProperty("spring.mail.username"));
     }
-
-    @Autowired
-    JavaMailSender mailSender;
 
     @PostConstruct
     public void checkMailSender() {

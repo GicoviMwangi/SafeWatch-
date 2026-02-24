@@ -9,13 +9,14 @@ import lombok.Setter;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 @Entity
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "Incident")
+@Table(name = "incident")
 public class Incident {
 
     @Id
@@ -41,6 +42,7 @@ public class Incident {
     private IncidentCategory incidentCategory;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private Status status;
 
     @Column(name = "reported_at")
@@ -66,8 +68,19 @@ public class Incident {
     @JoinColumn(name = "reviewed_by")
     private User reviewedBy;
 
-    @Column(name = "review_comment",length = 500)
+    @Column(name = "review_comment", length = 500)
     private String reviewComment;
 
+    @Column(name = "deleted_at")
+    private OffsetDateTime deletedAt;
 
+    @Column(name = "deleted_reason")
+    private String deletedReason;
+
+    @Column(name = "deleted_by")
+    private Long deletedBy;
+
+    public boolean isDeleted() {
+        return deletedAt != null;
+    }
 }

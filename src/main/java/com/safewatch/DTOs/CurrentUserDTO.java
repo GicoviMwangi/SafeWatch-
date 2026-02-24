@@ -9,7 +9,7 @@ public record CurrentUserDTO(String email,
                              String sName,
                              LocalDateTime createdAt) {
 
-    public static CurrentUserDTO from (User u){
+    public static CurrentUserDTO from(User u) {
         return new CurrentUserDTO(
                 u.getEmail(),
                 u.getFName(),

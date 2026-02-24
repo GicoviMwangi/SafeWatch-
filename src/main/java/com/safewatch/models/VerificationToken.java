@@ -16,7 +16,7 @@ import java.util.UUID;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "verification_token",indexes = {
+@Table(name = "verification_token", indexes = {
         @Index(name = "idx_token_hash", columnList = "token_hash"),
         @Index(name = "idx_user_type", columnList = "user_id, token_type")
 })
@@ -34,7 +34,7 @@ public class VerificationToken {
     private String tokenHash;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "token_type", nullable = false,length = 30)
+    @Column(name = "token_type", nullable = false, length = 30)
     private TokenType tokenType;
 
 
@@ -43,7 +43,7 @@ public class VerificationToken {
     private User user;
 
     @CreationTimestamp
-    @Column(nullable = false, name = "created_at",updatable = false)
+    @Column(nullable = false, name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @Column(nullable = false, name = "expires_at")

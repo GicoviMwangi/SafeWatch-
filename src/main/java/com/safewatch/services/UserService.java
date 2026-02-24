@@ -296,7 +296,7 @@ public class UserService {
     }
 
     @Transactional
-    public void passwordReset(String token, String newPassword,String confirmPassword) {
+    public void passwordReset(String token, String newPassword, String confirmPassword) {
         VerificationToken verificationToken = verificationTokenRepo.findByTokenHash(hashingService.hash(token)).orElseThrow(() -> new RuntimeException("Token invalid/used."));
 
 

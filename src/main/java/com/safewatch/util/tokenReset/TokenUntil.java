@@ -8,25 +8,25 @@ import java.util.Base64;
 public class TokenUntil {
     private static final SecureRandom random = new SecureRandom();
 
-    public static String generateToken(){
+    public static String generateToken() {
         byte[] bytes = new byte[64];
         random.nextBytes(bytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
     }
 
-    public static String sha256(String input){
+    public static String sha256(String input) {
         try {
             MessageDigest digest = MessageDigest.getInstance("SHA-256");
             byte[] hash = digest.digest(input.getBytes(StandardCharsets.UTF_8));
 
             StringBuilder sb = new StringBuilder(hash.length * 2);
 
-            for (byte b : hash){
-                sb.append(String.format("%02x",b));
+            for (byte b : hash) {
+                sb.append(String.format("%02x", b));
             }
 
             return sb.toString();
-        }catch (Exception e){
+        } catch (Exception e) {
             throw new IllegalStateException("SHA-256 failure", e);
         }
     }

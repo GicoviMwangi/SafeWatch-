@@ -4,7 +4,7 @@ import com.safewatch.DTOs.IncidentDTO;
 
 public interface IncidentModerationPolicy {
 
-    IncidentDTO verifyIncident(String adminEmail,Long id);
+    IncidentDTO verifyIncident(String adminEmail, Long id);
 
     IncidentDTO publishIncident(Long id, String adminEmail);
 

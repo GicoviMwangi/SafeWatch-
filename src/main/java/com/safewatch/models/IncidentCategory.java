@@ -4,5 +4,5 @@ import lombok.Getter;
 
 @Getter
 public enum IncidentCategory {
-    FIRE, TRAFFIC, DEMONSTRATIONS, RALLIES,ACCIDENT
+    FIRE, TRAFFIC, DEMONSTRATIONS, RALLIES, ACCIDENT
 }

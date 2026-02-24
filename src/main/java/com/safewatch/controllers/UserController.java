@@ -8,7 +8,6 @@ import com.safewatch.util.userRelated.*;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotBlank;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -52,7 +51,7 @@ public class UserController {
     }
 
     @PostMapping("/verify")
-    public ResponseEntity<?> verifyToken(@Valid @RequestBody VerifyRequest  verifyRequest) {
+    public ResponseEntity<?> verifyToken(@Valid @RequestBody VerifyRequest verifyRequest) {
         userService.verifyToken(verifyRequest.token());
         return ResponseEntity.ok().build();
     }
@@ -67,7 +66,7 @@ public class UserController {
                 .map(v -> v.split(",")[0].trim())
                 .orElse(servletRequest.getRemoteAddr());
 
-        var result = userService.login(request.email(), request.password(), user.getUserID(), userAgent, ip);
+        var result = userService.login(request.email(), request.password(), user.getUserId(), userAgent, ip);
 
         ResponseCookie cookie = ResponseCookie.from("refreshToken", result.refreshToken())
                 .httpOnly(true)
@@ -140,12 +139,12 @@ public class UserController {
     @PostMapping("/forgot/password")
     public ResponseEntity<?> forgotPassword(@RequestParam @Valid ResetPasswordRequest passwordRequest) {
         userService.RequestPasswordReset(passwordRequest.email());
-        return  ResponseEntity.ok().build();
+        return ResponseEntity.ok().build();
     }
 
     @PutMapping
     public ResponseEntity<?> resetPassword(@RequestBody @Valid PasswordResetRequest resetRequest) {
-        userService.passwordReset(resetRequest.token(),resetRequest.newPassword(),resetRequest.confirmPassword());
+        userService.passwordReset(resetRequest.token(), resetRequest.newPassword(), resetRequest.confirmPassword());
         return ResponseEntity.ok().build();
     }
 }

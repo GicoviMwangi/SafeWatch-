@@ -21,9 +21,9 @@ public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
-    private Long userID;
+    private Long userId;
 
-    @Column(nullable = false, name = "email",unique = true)
+    @Column(nullable = false, name = "email", unique = true)
     private String email;
 
     @Column(nullable = false, name = "password")
@@ -65,7 +65,7 @@ public class User {
     @JoinColumn(name = "role_fk")
     private UserRole userRole;
 
-    public boolean hasRole(RoleType roleType){
+    public boolean hasRole(RoleType roleType) {
         return this.userRole.getRoleName() == roleType;
     }
 }
